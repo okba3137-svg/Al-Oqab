@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لعبة العُقاب - النسخة المتكاملة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-orange: #ff9e00;
+            --primary-blue: #2355d6;
+            --dark-blue: #1a40a3;
+            --bg-color: #f8f9fa;
+            --success-green: #2a9d8f;
+            --danger-red: #e63946;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; }
+        body { background: var(--bg-color); min-height: 100vh; overflow-x: hidden; width: 100vw; }
+
+        .screen {
+            position: absolute; width: 100%; min-height: 100vh; display: none;
+            flex-direction: column; align-items: center; padding: 20px;
+        }
+        .screen.active { display: flex; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary-orange), #ff6d00); color: white;
+            border: none; padding: 15px 40px; font-size: 1.5rem; font-weight: 800;
+            border-radius: 50px; cursor: pointer; box-shadow: 0 10px 20px rgba(255, 109, 0, 0.3);
+            margin-top: 20px; transition: 0.3s; text-align: center;
+        }
+        .btn:hover { transform: translateY(-5px); }
+        .btn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; transform: none; }
+
+        .game-logo {
+            font-family: 'Lalezar', cursive; font-size: clamp(3rem, 8vw, 6rem); color: var(--primary-orange);
+            text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, 3px 3px 0px #ff6d00, 6px 6px 0px var(--primary-blue);
+            margin: 20px 0; text-align: center;
+        }
+
+        /* --- شاشة الإعداد والفرق --- */
+        .setup-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 900px;}
+        .team-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); flex: 1; min-width: 280px; border-top: 5px solid var(--primary-blue); }
+        .team-card:nth-child(2) { border-top: 5px solid var(--primary-orange); }
+        .team-input { width: 100%; padding: 12px; font-size: 1.2rem; font-weight: 700; border: 2px solid #ced4da; border-radius: 10px; margin-bottom: 15px; background: #f8f9fa; transition: 0.3s;}
+        .team-input:focus { border-color: var(--primary-blue); outline: none; background: #fff;}
+        
+        .avatars-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .avatar-option { font-size: 2rem; background: #f1f3f5; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; border: 3px solid transparent; }
+        .avatar-option.selected { border-color: var(--primary-blue); background: #e7f5ff; transform: scale(1.1); }
+
+        /* --- نظام التبويبات في الإعدادات الاحترافية --- */
+        .settings-tabs { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; max-width: 800px; justify-content: center; flex-wrap: wrap; }
+        .tab-btn { flex: 1; min-width: 200px; padding: 15px; background: #e9ecef; border: none; border-radius: 10px; font-size: 1.3rem; font-weight: bold; cursor: pointer; color: var(--dark-blue); transition: 0.3s; }
+        .tab-btn.active { background: var(--primary-orange); color: white; box-shadow: 0 5px 15px rgba(255, 158, 0, 0.4); }
+        .tab-content { display: none; width: 100%; max-width: 800px; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        
+        .form-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e9ecef;}
+        .input-label { display: block; font-weight: bold; color: var(--dark-blue); margin-bottom: 5px; font-size: 1.1rem;}
+        .form-row { display: flex; gap: 15px; flex-wrap: wrap; }
+        .form-col { flex: 1; min-width: 200px; }
+
+        /* --- شاشة المجموعات --- */
+        .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; width: 100%; max-width: 900px; }
+        .cat-card { background: white; border-radius: 15px; padding: 15px 10px; text-align: center; box-shadow: 0 5px 10px rgba(0,0,0,0.05); cursor: pointer; border: 3px solid transparent; font-weight: 800; font-size: 1.1rem; }
+        .cat-card.selected { border-color: var(--primary-orange); background: #fff8eb; }
+
+        /* --- شاشة اللعب الرئيسية --- */
+        #game-screen { background: #e9ecef; padding: 10px; }
+        
+        .scoreboard {
+            display: flex; flex-wrap: wrap; gap: 15px; width: 100%; max-width: 1200px;
+            background: transparent; margin-bottom: 20px; justify-content: center;
+        }
+        .team-score-box {
+            flex: 1; min-width: 300px; background: white; display: flex; align-items: center; justify-content: space-between;
+            padding: 15px 20px; border-radius: 20px; border: 4px solid transparent; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: 0.3s;
+        }
+        .team-score-box.active-turn { border-color: var(--primary-orange); background: #fff8eb; box-shadow: 0 0 20px rgba(255, 158, 0, 0.4); transform: scale(1.02); }
+        .team-name-display { font-size: 1.5rem; font-weight: 800; }
+        .score-controls { display: flex; align-items: center; gap: 10px; }
+        .score-btn { width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 1.5rem; font-weight: bold; cursor: pointer; color: white; display: flex; justify-content: center; align-items: center;}
+        .score-btn.minus { background: var(--danger-red); }
+        .score-btn.plus { background: var(--success-green); }
+        .score-value { font-size: 2.5rem; font-weight: 900; font-family: 'Lalezar'; min-width: 70px; text-align: center; }
+
+        /* لوحة الأسئلة */
+        .board-container { width: 100%; max-width: 1200px; display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; }
+        .board-column { flex: 1; min-width: 130px; display: flex; flex-direction: column; gap: 10px; }
+        .board-cat-title { background: var(--primary-blue); color: white; font-weight: 800; font-size: 1.1rem; text-align: center; padding: 15px 5px; border-radius: 10px; }
+        .question-box { background: white; color: var(--primary-orange); font-size: 2.5rem; font-weight: 900; text-align: center; padding: 20px 5px; border-radius: 10px; cursor: pointer; font-family: 'Lalezar'; border: 2px solid #dee2e6; }
+        .question-box.used { background: #e9ecef; color: #adb5bd; border-color: #dee2e6; cursor: not-allowed; text-decoration: line-through; }
+
+        /* --- نافذة السؤال --- */
+        #question-modal {
+            position: fixed; inset: 0; width: 100vw; height: 100vh;
+            background: var(--primary-blue); z-index: 1000; display: none;
+            flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 20px; color: white; overflow-y: auto; box-sizing: border-box;
+        }
+
+        .double-badge { background: #ff0055; color: white; padding: 10px 25px; border-radius: 20px; font-weight: bold; font-size: 1.5rem; animation: pulse 1s infinite; margin-bottom: 10px; display: none; box-shadow: 0 0 15px rgba(255,0,85,0.5); }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .modal-header { display: flex; justify-content: space-between; width: 100%; max-width: 1000px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;}
+        .timer-circle { width: 70px; height: 70px; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; font-family: 'Lalezar'; margin: 0 auto;}
+        
+        .modal-helps { display: flex; gap: 10px; justify-content: center; width: 100%; max-width: 600px; margin-bottom: 30px; flex-wrap: wrap; }
+        .help-btn { background: white; color: var(--primary-blue); border: none; padding: 10px 20px; border-radius: 50px; font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;}
+        .help-btn:disabled { background: #6c757d; color: #ced4da; cursor: not-allowed; box-shadow: none; }
+
+        .modal-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; max-width: 900px; }
+        
+        .modal-q-img { max-width: 90%; max-height: 250px; object-fit: contain; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; background: white; padding: 10px; }
+        .question-text { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; text-align: center; margin-bottom: 30px; line-height: 1.4; }
+        
+        #mcq-container { display: none; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; margin-bottom: 30px; }
+        .mcq-btn { background: rgba(255,255,255,0.1); border: 2px solid white; color: white; padding: 15px; font-size: 1.3rem; font-weight: bold; border-radius: 15px; cursor: pointer; }
+        #hint-text { display: none; font-size: 1.5rem; color: #ff9e00; margin-bottom: 20px; font-style: italic; background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 10px;}
+
+        .action-buttons { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+        .show-answer-btn { background: var(--primary-orange); color: white; padding: 15px 40px; font-size: 1.5rem; font-weight: bold; border-radius: 50px; border: none; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 158, 0, 0.4); }
+        .pass-turn-btn { background: var(--dark-blue); color: white; padding: 15px 40px; font-size: 1.5rem; font-weight: bold; border-radius: 50px; border: none; cursor: pointer; border: 2px solid white; }
+
+        .answer-evaluation { display: none; background: rgba(255,255,255,0.1); width: 100%; max-width: 800px; padding: 20px; border-radius: 20px; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px;}
+        .eval-buttons { display: flex; gap: 10px; width: 100%; justify-content: center; flex-wrap: wrap; }
+        .eval-btn { flex: 1; min-width: 150px; padding: 15px; font-size: 1.2rem; font-weight: 800; border-radius: 50px; border: none; cursor: pointer; }
+        .eval-team { background: white; color: var(--primary-blue); }
+        .eval-none { background: black; color: white; }
+
+        /* --- شاشة النهاية وعجلة العقاب --- */
+        #end-screen { background: var(--dark-blue); color: white; justify-content: center; }
+        .winner-announcement { font-size: clamp(3rem, 6vw, 5rem); font-family: 'Lalezar'; color: var(--primary-orange); margin: 20px 0; animation: bounce 1s infinite; text-align: center; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        
+        .wheel-container { position: relative; width: 250px; height: 250px; margin: 30px 0; }
+        #punishment-wheel {
+            width: 100%; height: 100%; border-radius: 50%; border: 5px solid white;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            background: conic-gradient(#ff9e00 0% 25%, #2355d6 25% 50%, #e63946 50% 75%, #2a9d8f 75% 100%);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .wheel-pointer {
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
+            border-top: 40px solid white; z-index: 10;
+        }
+
+        /* تحسينات العرض الأفقي */
+        @media (max-height: 600px) {
+            .game-logo { margin: 5px 0; font-size: clamp(2rem, 5vw, 2.5rem); }
+            #game-screen { padding: 5px; }
+            .team-score-box { min-width: 220px; padding: 10px 15px; }
+            .score-value { font-size: 2rem; }
+            .question-text { font-size: clamp(1.5rem, 4vw, 2rem); margin-bottom: 15px; }
+            .modal-q-img { max-height: 150px; }
+            .timer-circle { width: 50px; height: 50px; font-size: 1.5rem; }
+            .wheel-container { width: 150px; height: 150px; margin: 10px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="screen active">
+        <h1 class="game-logo" style="font-size: 8rem;">العُقاب</h1>
+        <p style="font-size: 1.5rem; color: var(--dark-blue); font-weight: bold; margin-bottom: 30px;">لعبة التحديات والأسئلة الممتعة</p>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 500px;">
+            <button class="btn" style="flex: 1; width: 100%; font-size: 2rem;" onclick="showScreen('setup-screen')">بدء اللعب 🚀</button>
+            <button class="btn" style="flex: 1; width: 100%; background: var(--dark-blue);" onclick="showScreen('settings-screen')">لوحة التحكم والإعدادات ⚙️</button>
+        </div>
+    </div>
+
+    <div id="settings-screen" class="screen">
+        <h2 class="game-logo" style="font-size: 3rem; margin-top: 0;">لوحة التحكم</h2>
+        
+        <div class="settings-tabs">
+            <button class="tab-btn active" onclick="switchSettingsTab('add-tab', this)">إضافة سؤال جديد ➕</button>
+            <button class="tab-btn" onclick="switchSettingsTab('edit-tab', this)">إدارة وتعديل الأسئلة ✏️</button>
+        </div>
+
+        <div id="add-tab" class="tab-content active">
+            <div class="form-card">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="input-label">اسم المجموعة (القسم)</label>
+                        <input type="text" id="new-cat" list="categories-list" class="team-input" placeholder="مثال: ثقافة عامة، رياضة...">
+                        <datalist id="categories-list"></datalist>
+                    </div>
+                    <div class="form-col">
+                        <label class="input-label">فئة النقاط</label>
+                        <input type="number" id="new-points" list="points-list" class="team-input" placeholder="مثال: 100, 200, 300...">
+                        <datalist id="points-list">
+                            <option value="100"><option value="200"><option value="300"><option value="400"><option value="500">
+                        </datalist>
+                    </div>
+                </div>
+
+                <label class="input-label">نص السؤال</label>
+                <textarea id="new-q" class="team-input" placeholder="اكتب السؤال هنا..." rows="2"></textarea>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="input-label">الإجابة الصحيحة</label>
+                        <input type="text" id="new-a" class="team-input" placeholder="الإجابة الدقيقة">
+                    </div>
+                    <div class="form-col">
+                        <label class="input-label">تلميح للمساعدة (اختياري)</label>
+                        <input type="text" id="new-hint" class="team-input" placeholder="معلومة بسيطة تقرب الإجابة">
+                    </div>
+                </div>
+
+                <label class="input-label">خيارات متعددة (اختياري - افصل بينها بفاصلة ،)</label>
+                <input type="text" id="new-opts" class="team-input" placeholder="الخيار الأول، الخيار الثاني، الخيار الثالث">
+
+                <label class="input-label">رابط صورة توضيحية (اختياري)</label>
+                <input type="text" id="new-img" class="team-input" placeholder="https://example.com/image.jpg">
+
+                <button class="btn" style="width: 100%; background: var(--success-green);" onclick="saveNewQuestion()">حفظ السؤال للإضافة 💾</button>
+            </div>
+        </div>
+
+        <div id="edit-tab" class="tab-content">
+            <div class="form-card" style="border-top: 4px solid var(--primary-orange);">
+                <h3 style="color: var(--primary-orange); margin-bottom: 15px;">تعديل اسم مجموعة</h3>
+                <div class="form-row">
+                    <div class="form-col" style="flex: 2;">
+                        <label class="input-label">اختر المجموعة</label>
+                        <select id="edit-cat-select" class="team-input" onchange="loadPointsForEdit()">
+                            <option value="">-- اختر المجموعة --</option>
+                        </select>
+                    </div>
+                    <div class="form-col" style="flex: 2;">
+                        <label class="input-label">الاسم الجديد</label>
+                        <input type="text" id="rename-cat-input" class="team-input" placeholder="الاسم الجديد للمجموعة">
+                    </div>
+                    <div class="form-col" style="display: flex; align-items: flex-end;">
+                        <button class="btn" style="width: 100%; margin-bottom: 15px; padding: 12px;" onclick="renameCategory()">تغيير الاسم 🔄</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card" style="border-top: 4px solid var(--primary-blue);">
+                <h3 style="color: var(--primary-blue); margin-bottom: 15px;">تعديل تفاصيل سؤال</h3>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="input-label">اختر النقاط</label>
+                        <select id="edit-points-select" class="team-input" onchange="loadQuestionsForEdit()">
+                            <option value="">-- اختر فئة النقاط --</option>
+                        </select>
+                    </div>
+                    <div class="form-col" style="flex: 2;">
+                        <label class="input-label">اختر السؤال</label>
+                        <select id="edit-q-select" class="team-input" onchange="loadQuestionDetails()">
+                            <option value="">-- اختر السؤال للتعديل --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="edit-fields-area" style="display: none; margin-top: 15px;">
+                    <label class="input-label">نص السؤال</label>
+                    <textarea id="edit-q-text" class="team-input" rows="2"></textarea>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="input-label">الإجابة</label>
+                            <input type="text" id="edit-q-a" class="team-input">
+                        </div>
+                        <div class="form-col">
+                            <label class="input-label">التلميح</label>
+                            <input type="text" id="edit-q-hint" class="team-input">
+                        </div>
+                    </div>
+                    
+                    <label class="input-label">الخيارات</label>
+                    <input type="text" id="edit-q-opts" class="team-input">
+                    <label class="input-label">رابط الصورة</label>
+                    <input type="text" id="edit-q-img" class="team-input">
+
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn" style="flex: 2; background: var(--success-green); margin-top: 0;" onclick="saveQuestionChanges()">حفظ التعديلات 💾</button>
+                        <button class="btn" style="flex: 1; background: var(--danger-red); margin-top: 0;" onclick="deleteSelectedQuestion()">حذف السؤال 🗑️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- إضافة قسم رفع التعديلات لمستودع GitHub -->
+        <div class="github-upload-section form-card" style="width: 100%; max-width: 800px; border-top: 4px solid #2ea44f;">
+            <h3 style="color: #2ea44f; margin-bottom: 10px;">🚀 تحديث مستودع Al Oqab</h3>
+            <div style="margin-bottom: 10px;">
+                <label for="github-token" class="input-label">توكن GitHub (PAT):</label>
+                <input type="password" id="github-token" class="team-input" placeholder="ghp_xxxxxxxxxxxxxxxxx" style="margin-top: 5px;" />
+            </div>
+            <button id="upload-github-btn" class="btn" onclick="uploadToAlOqab()" style="width: 100%; padding: 12px; background-color: #2ea44f; margin-top: 5px;">
+                ⬆️ رفع التعديلات مباشرة
+            </button>
+            <textarea id="generated-code-area" style="display: none;"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; width: 100%; max-width: 800px; justify-content: space-between; flex-wrap: wrap;">
+            <button class="btn" style="background: #6c757d;" onclick="showScreen('start-screen')">العودة للرئيسية 🏠</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="background: var(--dark-blue);" onclick="exportDatabase()">تصدير نسخة احتياطية 📥</button>
+                <button class="btn" style="background: var(--danger-red);" onclick="resetDatabase()">مسح كل البيانات ⚠️</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="setup-screen" class="screen">
+        <h1 style="color:var(--primary-blue); margin-bottom:30px;">إعداد الفرق</h1>
+        <div class="setup-container">
+            <div class="team-card" id="t1-setup">
+                <label class="input-label" style="text-align: center;">اسم الفريق الأول</label>
+                <input type="text" class="team-input" id="t1-name" value="الفريق الأول" style="text-align: center;">
+                <div class="avatars-grid">
+                    <div class="avatar-option selected" onclick="selectAvatar(this, 't1')">🦅</div>
+                    <div class="avatar-option" onclick="selectAvatar(this, 't1')">🦁</div>
+                    <div class="avatar-option" onclick="selectAvatar(this, 't1')">🐺</div>
+                    <div class="avatar-option" onclick="selectAvatar(this, 't1')">⚡</div>
+                </div>
+            </div>
+            <div class="team-card" id="t2-setup">
+                <label class="input-label" style="text-align: center;">اسم الفريق الثاني</label>
+                <input type="text" class="team-input" id="t2-name" value="الفريق الثاني" style="text-align: center;">
+                <div class="avatars-grid">
+                    <div class="avatar-option selected" onclick="selectAvatar(this, 't2')">🐻</div>
+                    <div class="avatar-option" onclick="selectAvatar(this, 't2')">🐯</div>
+                    <div class="avatar-option" onclick="selectAvatar(this, 't2')">🦈</div>
+                    <div class="avatar-option" onclick="selectAvatar(this, 't2')">🔥</div>
+                </div>
+            </div>
+        </div>
+        <button class="btn" onclick="goToCategories()">التالي ⬅️</button>
+    </div>
+
+    <div id="categories-screen" class="screen">
+        <h2 style="color:var(--primary-blue); margin-bottom:10px; text-align: center;">اختر 6 مجموعات على الأقل للعب</h2>
+        <h3 id="cat-counter" style="color:#ff6d00; margin-bottom:20px;">تم اختيار: 0</h3>
+        <div class="categories-grid" id="cat-grid"></div>
+        <div style="display: flex; gap: 15px; margin-top: 20px;">
+            <button class="btn" style="background: #6c757d;" onclick="showScreen('setup-screen')">رجوع</button>
+            <button class="btn" id="btn-start-game" disabled onclick="startGame()">اعتماد وبدء اللعب 🎮</button>
+        </div>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin-bottom: 10px;">
+            <div style="width: 100px;"></div> <h2 class="game-logo" style="font-size: 3rem; margin: 0;">العُقاب</h2>
+            <button class="btn" style="background: var(--danger-red); padding: 10px 20px; font-size: 1.2rem; margin: 0;" onclick="exitGame()">خروج 🚪</button>
+        </div>
+        
+        <div class="scoreboard">
+            <div class="team-score-box active-turn" id="scorebox-1">
+                <div style="font-size: 3rem;" id="t1-avatar">🦅</div>
+                <div id="t1-display-name" class="team-name-display">الفريق الأول</div>
+                <div class="score-controls">
+                    <button class="score-btn minus" onclick="manualScore(1, -100)">-</button>
+                    <div class="score-value" id="score-1">0</div>
+                    <button class="score-btn plus" onclick="manualScore(1, 100)">+</button>
+                </div>
+            </div>
+
+            <div class="team-score-box" id="scorebox-2">
+                <div style="font-size: 3rem;" id="t2-avatar">🐻</div>
+                <div id="t2-display-name" class="team-name-display">الفريق الثاني</div>
+                <div class="score-controls">
+                    <button class="score-btn minus" onclick="manualScore(2, -100)">-</button>
+                    <div class="score-value" id="score-2">0</div>
+                    <button class="score-btn plus" onclick="manualScore(2, 100)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="board-container" id="game-board"></div>
+    </div>
+
+    <div id="question-modal">
+        <div id="double-label" class="double-badge">✨ سؤال مضاعف النقاط (Double) ✨</div>
+        
+        <div class="modal-header">
+            <div style="font-size: 1.5rem; font-weight: bold; flex: 1;" id="modal-team-turn">دور فريق: ن</div>
+            <div class="timer-circle" id="modal-timer">60</div>
+            <div style="font-size: 1.5rem; font-weight: bold; flex: 1; text-align: left;" id="modal-points">نقاط 300 ★</div>
+        </div>
+
+        <div class="modal-helps" id="modal-helps-container"></div>
+
+        <div class="modal-body">
+            <div id="hint-text"></div>
+            <img id="modal-q-img" class="modal-q-img" src="" alt="صورة السؤال">
+            <div class="question-text" id="modal-q-text">سؤال؟</div>
+            <div id="mcq-container"></div>
+            
+            <div class="action-buttons">
+                <button class="pass-turn-btn" id="btn-pass-turn" onclick="manualPassTurn()">تحويل الدور 🔄</button>
+                <button class="show-answer-btn" id="btn-show-answer" onclick="revealAnswer()">عرض الإجابة ✔</button>
+            </div>
+
+            <div class="answer-evaluation" id="eval-area">
+                <div class="question-text" id="actual-answer" style="margin-bottom: 20px; font-size: 2.5rem; color: #ff9e00;">الجواب</div>
+                <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;">من أجاب بشكل صحيح؟</div>
+                <div class="eval-buttons">
+                    <button class="eval-btn eval-team" id="btn-win-t1" onclick="assignPoints(1)">الفريق 1 ✔</button>
+                    <button class="eval-btn eval-none" onclick="assignPoints(0)">لا أحد ✖</button>
+                    <button class="eval-btn eval-team" id="btn-win-t2" onclick="assignPoints(2)">الفريق 2 ✔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="end-screen" class="screen">
+        <div class="winner-announcement" id="winner-text">الفائز هو فريق...</div>
+        <div style="font-size: 1.5rem; margin-bottom: 10px;">الآن.. وقت العقاب للفريق الخاسر! 😈</div>
+        
+        <div class="wheel-container">
+            <div class="wheel-pointer"></div>
+            <div id="punishment-wheel"></div>
+        </div>
+        
+        <button class="btn" id="spin-btn" style="background:var(--success-green); margin-bottom: 15px;" onclick="spinWheel()">لف العجلة!</button>
+        <h2 id="punishment-result" style="font-size: 2rem; color:var(--primary-orange); margin-bottom: 20px; min-height: 40px;"></h2>
+        
+        <button class="btn" onclick="location.reload()">العودة للرئيسية 🏠</button>
+    </div>
+
+<script>
+    // قاعدة البيانات الافتراضية
+    let db = {};
+
+    // استرجاع الأسئلة المحفوظة في المتصفح إن وجدت
+    const savedData = localStorage.getItem('alokab_db_saved');
+    if (savedData) {
+        db = JSON.parse(savedData);
+    }
+
+    const punishments = [
+        "غناء شارة سبيستون بصوت عالي", 
+        "10 تمارين ضغط الآن", 
+        "الوقوف على قدم واحدة لمدة دقيقة", 
+        "شرب كوب ماء كامل بجرعة واحدة", 
+        "تقليد صوت حيوان يختاره الفائز", 
+        "إعطاء الهاتف للفائز ليصور سيلفي"
+    ];
+
+    let teams = {
+        1: { name: "", avatar: "", score: 0, helps: { time: 1, block: 1, mcq: 1, hint: 1 } },
+        2: { name: "", avatar: "", score: 0, helps: { time: 1, block: 1, mcq: 1, hint: 1 } }
+    };
+    let selectedCats = [];
+    let currentTurn = 1;
+    let questionStarter = 1;
+    let activeQuestion = null;
+    let timerInterval;
+    let timeLeft = 60;
+    let transferBlocked = false;
+    
+    let questionsCount = 0;
+    let answeredCount = 0;
+    let doubleQuestionIndex = -1;
+
+    // --- دوال التنقل والواجهة ---
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'settings-screen') refreshAllLists();
+    }
+
+    // دالة للتبديل بين تبويبات الإعدادات
+    function switchSettingsTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        btnElement.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    // دالة الخروج من اللعبة أثناء التحدي
+    function exitGame() {
+        if(confirm("هل أنت متأكد من الخروج؟ ستفقد جميع نقاط الفرق والمباراة الحالية.")) {
+            location.reload(); // إعادة تحميل الصفحة للعودة للبداية وتصفير كل شيء
+        }
+    }
+
+    // --- دوال الإعداد والتهيئة ---
+    function selectAvatar(element, team) {
+        document.querySelectorAll(`#${team}-setup .avatar-option`).forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+    }
+
+    function goToCategories() {
+        teams[1].name = document.getElementById('t1-name').value || "الفريق الأول";
+        teams[1].avatar = document.querySelector('#t1-setup .selected').innerText;
+        teams[2].name = document.getElementById('t2-name').value || "الفريق الثاني";
+        teams[2].avatar = document.querySelector('#t2-setup .selected').innerText;
+        
+        renderCategories();
+        showScreen('categories-screen');
+    }
+
+    function renderCategories() {
+        const grid = document.getElementById('cat-grid');
+        grid.innerHTML = '';
+        selectedCats = []; // تصفير الاختيارات السابقة
+        document.getElementById('cat-counter').innerText = `تم اختيار: 0`;
+        document.getElementById('btn-start-game').disabled = true;
+
+        const categories = Object.keys(db);
+        if(categories.length === 0) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:red; font-size:1.2rem;">لا توجد أسئلة! يرجى إضافة أسئلة من لوحة التحكم أولاً.</p>';
+            return;
+        }
+
+        categories.forEach(cat => { 
+            const div = document.createElement('div');
+            div.className = 'cat-card';
+            div.innerText = cat;
+            div.onclick = () => {
+                div.classList.toggle('selected');
+                if(div.classList.contains('selected')) selectedCats.push(cat);
+                else selectedCats = selectedCats.filter(c => c !== cat);
+                
+                document.getElementById('cat-counter').innerText = `تم اختيار: ${selectedCats.length}`;
+                document.getElementById('btn-start-game').disabled = selectedCats.length < 6;
+            };
+            grid.appendChild(div);
+        });
+    }
+
+    // --- دوال شاشة اللعب ---
+    function startGame() {
+        document.getElementById('t1-display-name').innerText = teams[1].name;
+        document.getElementById('t1-avatar').innerText = teams[1].avatar;
+        document.getElementById('t2-display-name').innerText = teams[2].name;
+        document.getElementById('t2-avatar').innerText = teams[2].avatar;
+        
+        document.getElementById('btn-win-t1').innerText = teams[1].name + " ✔";
+        document.getElementById('btn-win-t2').innerText = teams[2].name + " ✔";
+
+        buildBoard();
+        updateTurnGlow();
+        showScreen('game-screen');
+    }
+
+    function buildBoard() {
+        const board = document.getElementById('game-board');
+        board.innerHTML = '';
+        questionsCount = 0;
+        answeredCount = 0;
+        let currentQuestionIndex = 0;
+
+        selectedCats.forEach(cat => {
+            const col = document.createElement('div');
+            col.className = 'board-column';
+            col.innerHTML = `<div class="board-cat-title">${cat}</div>`;
+
+            const points = Object.keys(db[cat]).map(Number).sort((a, b) => b - a);
+
+            questionsCount += points.reduce((sum, pt) => sum + (db[cat][pt]?.length || 0), 0);
+
+            points.forEach(pt => {
+                const box = document.createElement('div');
+                box.className = 'question-box';
+                box.innerText = pt;
+                const isDouble = (currentQuestionIndex === doubleQuestionIndex);
+                box.onclick = () => openQuestion(cat, pt, box, isDouble);
+                col.appendChild(box);
+                currentQuestionIndex++;
+            });
+            board.appendChild(col);
+        });
+
+        // تحديد سؤال الدبل بشكل عشوائي فقط إذا كانت هناك أسئلة
+        if(questionsCount > 0) {
+            doubleQuestionIndex = Math.floor(Math.random() * questionsCount);
+        }
+    }
+
+    function openQuestion(cat, points, element, isDouble) {
+        if(element.classList.contains('used')) return;
+        element.classList.add('used');
+        answeredCount++; 
+        questionStarter = currentTurn;
+
+        const qList = db[cat][points];
+        activeQuestion = qList[Math.floor(Math.random() * qList.length)];
+        activeQuestion.points = points;
+        activeQuestion.double = isDouble; 
+        transferBlocked = false;
+
+        document.getElementById('double-label').style.display = isDouble ? 'block' : 'none';
+        document.getElementById('modal-team-turn').innerText = `دور: ${teams[currentTurn].name}`;
+        document.getElementById('modal-points').innerText = `النقاط: ${points}`;
+        
+        const imgElement = document.getElementById('modal-q-img');
+        if (activeQuestion.img) {
+            imgElement.src = activeQuestion.img;
+            imgElement.style.display = 'block';
+        } else {
+            imgElement.src = '';
+            imgElement.style.display = 'none';
+        }
+
+        document.getElementById('modal-q-text').innerText = activeQuestion.q;
+        document.getElementById('mcq-container').style.display = 'none';
+        document.getElementById('hint-text').style.display = 'none';
+        document.getElementById('btn-show-answer').style.display = 'block';
+        document.getElementById('btn-pass-turn').style.display = 'block';
+        document.getElementById('eval-area').style.display = 'none';
+        
+        updateModalHelps(); 
+        document.getElementById('question-modal').style.display = 'flex';
+        timeLeft = 60;
+        startTimer();
+    }
+
+    function updateModalHelps() {
+        const container = document.getElementById('modal-helps-container');
+        const h = teams[currentTurn].helps;
+        container.innerHTML = `
+            <button class="help-btn" onclick="useHelp('time')" ${!h.time ? 'disabled':''}>دقيقة+ ⏰</button>
+            <button class="help-btn" onclick="useHelp('block')" ${!h.block ? 'disabled':''}>منع التحويل 🚫</button>
+            <button class="help-btn" onclick="useHelp('mcq')" ${!h.mcq ? 'disabled':''}>خيارات ❓</button>
+            <button class="help-btn" onclick="useHelp('hint')" ${!h.hint ? 'disabled':''}>تلميح 💡</button>
+        `;
+    }
+
+    function useHelp(type) {
+        if(teams[currentTurn].helps[type] === 0) return;
+
+        if (type === 'time') {
+            timeLeft += 60;
+            document.getElementById('modal-timer').innerText = timeLeft;
+        } else if (type === 'block') {
+            transferBlocked = true;
+            alert("تم تفعيل منع التحويل! الفريق الآخر لن يستلم السؤال.");
+            document.getElementById('btn-pass-turn').style.display = 'none'; 
+        } else if (type === 'mcq') {
+            if(activeQuestion.points === 500) return alert("لا يمكن استخدام خيارات المتعدد لأسئلة 500 نقطة!");
+            if(!activeQuestion.opts || activeQuestion.opts.length === 0) return alert("لا توجد خيارات مسجلة لهذا السؤال.");
+            
+            const mcqDiv = document.getElementById('mcq-container');
+            mcqDiv.innerHTML = '';
+            activeQuestion.opts.forEach(opt => {
+                mcqDiv.innerHTML += `<button class="mcq-btn" onclick="revealAnswer()">${opt}</button>`;
+            });
+            mcqDiv.style.display = 'grid';
+        } else if (type === 'hint') {
+            if(!activeQuestion.hint) return alert("لا يوجد تلميح مسجل لهذا السؤال.");
+            document.getElementById('hint-text').innerText = "💡 تلميح: " + activeQuestion.hint;
+            document.getElementById('hint-text').style.display = 'block';
+        }
+
+        teams[currentTurn].helps[type] = 0; 
+        updateModalHelps(); 
+    }
+
+    function manualPassTurn() {
+        if (transferBlocked) return alert("لا يمكن تحويل الدور (تم منعه من قبل الفريق الآخر)!");
+        
+        clearInterval(timerInterval);
+        currentTurn = currentTurn === 1 ? 2 : 1;
+        document.getElementById('modal-team-turn').innerText = `دور: ${teams[currentTurn].name} (سؤال محول)`;
+        
+        timeLeft = 30; // وقت أقل للسؤال المحول
+        transferBlocked = true; // لا يمكن تحويله مرة أخرى
+        
+        document.getElementById('btn-pass-turn').style.display = 'none'; 
+        updateModalHelps(); 
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        document.getElementById('modal-timer').innerText = timeLeft;
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('modal-timer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                if (!transferBlocked) {
+                    alert('انتهى الوقت! ينتقل السؤال للفريق الآخر.');
+                    currentTurn = currentTurn === 1 ? 2 : 1;
+                    document.getElementById('modal-team-turn').innerText = `دور: ${teams[currentTurn].name} (تحويل إجباري)`;
+                    timeLeft = 30; 
+                    transferBlocked = true; 
+                    document.getElementById('btn-pass-turn').style.display = 'none';
+                    updateModalHelps(); 
+                    startTimer();
+                } else {
+                    revealAnswer(); 
+                }
+            }
+        }, 1000);
+    }
+
+    function revealAnswer() {
+        clearInterval(timerInterval);
+        document.getElementById('btn-show-answer').style.display = 'none';
+        document.getElementById('btn-pass-turn').style.display = 'none';
+        document.getElementById('mcq-container').style.display = 'none';
+        document.getElementById('modal-helps-container').innerHTML = ''; 
+        
+        document.getElementById('actual-answer').innerText = activeQuestion.a;
+        document.getElementById('eval-area').style.display = 'flex';
+    }
+
+    function assignPoints(winnerTeamId) {
+        if (winnerTeamId !== 0) {
+            let pointsEarned = activeQuestion.points * (activeQuestion.double ? 2 : 1);
+            teams[winnerTeamId].score += pointsEarned;
+            document.getElementById(`score-${winnerTeamId}`).innerText = teams[winnerTeamId].score;
+        }
+        
+        document.getElementById('modal-q-img').style.display = 'none';
+        document.getElementById('question-modal').style.display = 'none';
+        currentTurn = questionStarter === 1 ? 2 : 1; 
+        updateTurnGlow();
+
+        if (answeredCount === questionsCount) {
+            setTimeout(showEndScreen, 1000);
+        }
+    }
+
+    function manualScore(teamId, amount) {
+        teams[teamId].score += amount;
+        document.getElementById(`score-${teamId}`).innerText = teams[teamId].score;
+    }
+
+    function updateTurnGlow() {
+        document.getElementById('scorebox-1').classList.toggle('active-turn', currentTurn === 1);
+        document.getElementById('scorebox-2').classList.toggle('active-turn', currentTurn === 2);
+    }
+
+    // --- دوال شاشة النهاية وعجلة العقاب ---
+    function showEndScreen() {
+        let winText = "";
+        if (teams[1].score > teams[2].score) winText = `🏆 ${teams[1].name} 🏆`;
+        else if (teams[2].score > teams[1].score) winText = `🏆 ${teams[2].name} 🏆`;
+        else winText = "النتيجة تعادل! 🤝";
+
+        document.getElementById('winner-text').innerText = winText;
+        showScreen('end-screen');
+    }
+
+    function spinWheel() {
+        const btn = document.getElementById('spin-btn');
+        btn.disabled = true; 
+        const randomDeg = Math.floor(1800 + Math.random() * 1800); 
+        document.getElementById('punishment-wheel').style.transform = `rotate(${randomDeg}deg)`;
+        
+        setTimeout(() => {
+            const randomPunishment = punishments[Math.floor(Math.random() * punishments.length)];
+            document.getElementById('punishment-result').innerText = randomPunishment;
+            btn.disabled = false;
+        }, 4000); 
+    }
+
+    // --- دوال لوحة التحكم (الإضافة والتعديل) ---
+
+    // تحديث جميع القوائم المنسدلة
+    function refreshAllLists() {
+        const catDatalist = document.getElementById('categories-list');
+        const editCatSelect = document.getElementById('edit-cat-select');
+        
+        if(catDatalist) catDatalist.innerHTML = '';
+        if(editCatSelect) editCatSelect.innerHTML = '<option value="">-- اختر المجموعة --</option>';
+
+        Object.keys(db).forEach(cat => {
+            if(catDatalist) {
+                const opt1 = document.createElement('option');
+                opt1.value = cat;
+                catDatalist.appendChild(opt1);
+            }
+            if(editCatSelect) {
+                const opt2 = document.createElement('option');
+                opt2.value = cat;
+                opt2.innerText = cat;
+                editCatSelect.appendChild(opt2);
+            }
+        });
+    }
+
+    function saveNewQuestion() {
+        const cat = document.getElementById('new-cat').value.trim();
+        const points = parseInt(document.getElementById('new-points').value);
+        const q = document.getElementById('new-q').value.trim();
+        const a = document.getElementById('new-a').value.trim();
+        const hint = document.getElementById('new-hint').value.trim();
+        const optsRaw = document.getElementById('new-opts').value.trim();
+        const img = document.getElementById('new-img').value.trim();
+
+        if (!cat || !points || !q || !a) {
+            return alert("يرجى تعبئة الحقول الأساسية (المجموعة، النقاط، السؤال، الإجابة)!");
+        }
+
+        if (!db[cat]) db[cat] = {};
+        if (!db[cat][points]) db[cat][points] = [];
+
+        let newQuestionObj = { q: q, a: a, hint: hint };
+        if (optsRaw) newQuestionObj.opts = optsRaw.split('،').map(opt => opt.trim()).filter(opt => opt !== "");
+        if (img) newQuestionObj.img = img;
+
+        db[cat][points].push(newQuestionObj);
+        localStorage.setItem('alokab_db_saved', JSON.stringify(db));
+        
+        refreshAllLists(); 
+        alert("تمت إضافة السؤال بنجاح! 🎉");
+
+        // تصفير الحقول ماعدا المجموعة والنقاط لتسهيل إضافة سؤال آخر
+        document.getElementById('new-q').value = '';
+        document.getElementById('new-a').value = '';
+        document.getElementById('new-hint').value = '';
+        document.getElementById('new-opts').value = '';
+        document.getElementById('new-img').value = '';
+    }
+
+    function renameCategory() {
+        const oldCatName = document.getElementById('edit-cat-select').value;
+        const newCatName = document.getElementById('rename-cat-input').value.trim();
+
+        if (!oldCatName) return alert("الرجاء اختيار مجموعة أولاً.");
+        if (!newCatName || oldCatName === newCatName) return;
+        if (db[newCatName]) return alert("يوجد مجموعة بهذا الاسم بالفعل!");
+
+        db[newCatName] = db[oldCatName]; 
+        delete db[oldCatName]; 
+        
+        localStorage.setItem('alokab_db_saved', JSON.stringify(db)); 
+        alert("تم تغيير اسم المجموعة بنجاح! ✅");
+        
+        document.getElementById('rename-cat-input').value = '';
+        refreshAllLists();
+        clearEditFields();
+    }
+
+    function loadPointsForEdit() {
+        const cat = document.getElementById('edit-cat-select').value;
+        const pointsSelect = document.getElementById('edit-points-select');
+        pointsSelect.innerHTML = '<option value="">-- اختر فئة النقاط --</option>';
+        clearEditFields();
+
+        if (!cat) return;
+        Object.keys(db[cat]).forEach(points => {
+            const option = document.createElement('option');
+            option.value = points;
+            option.innerText = points + " نقطة";
+            pointsSelect.appendChild(option);
+        });
+    }
+
+    function loadQuestionsForEdit() {
+        const cat = document.getElementById('edit-cat-select').value;
+        const points = document.getElementById('edit-points-select').value;
+        const qSelect = document.getElementById('edit-q-select');
+        qSelect.innerHTML = '<option value="">-- اختر السؤال للتعديل --</option>';
+        clearEditFields();
+
+        if (!cat || !points) return;
+        db[cat][points].forEach((question, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.innerText = (index + 1) + "- " + question.q.substring(0, 35) + "...";
+            qSelect.appendChild(option);
+        });
+    }
+
+    function loadQuestionDetails() {
+        const cat = document.getElementById('edit-cat-select').value;
+        const points = document.getElementById('edit-points-select').value;
+        const qIndex = document.getElementById('edit-q-select').value;
+
+        if (!cat || !points || qIndex === "") return clearEditFields();
+
+        const question = db[cat][points][qIndex];
+        document.getElementById('edit-fields-area').style.display = 'block';
+        
+        document.getElementById('edit-q-text').value = question.q;
+        document.getElementById('edit-q-a').value = question.a;
+        document.getElementById('edit-q-hint').value = question.hint || '';
+        document.getElementById('edit-q-opts').value = question.opts ? question.opts.join('، ') : '';
+        document.getElementById('edit-q-img').value = question.img || '';
+    }
+
+    function saveQuestionChanges() {
+        const cat = document.getElementById('edit-cat-select').value;
+        const points = document.getElementById('edit-points-select').value;
+        const qIndex = document.getElementById('edit-q-select').value;
+
+        const q = document.getElementById('edit-q-text').value.trim();
+        const a = document.getElementById('edit-q-a').value.trim();
+        const hint = document.getElementById('edit-q-hint').value.trim();
+        const optsRaw = document.getElementById('edit-q-opts').value.trim();
+        const img = document.getElementById('edit-q-img').value.trim();
+
+        if (!q || !a) return alert("نص السؤال والإجابة حقول إجبارية!");
+
+        let updatedQuestion = { q: q, a: a, hint: hint };
+        if (optsRaw) updatedQuestion.opts = optsRaw.split('،').map(opt => opt.trim()).filter(opt => opt !== "");
+        if (img) updatedQuestion.img = img;
+
+        db[cat][points][qIndex] = updatedQuestion;
+        localStorage.setItem('alokab_db_saved', JSON.stringify(db)); 
+
+        alert("تم حفظ التعديلات بنجاح! ✅");
+        loadQuestionsForEdit(); 
+        document.getElementById('edit-q-select').value = qIndex; 
+    }
+
+    function deleteSelectedQuestion() {
+        const cat = document.getElementById('edit-cat-select').value;
+        const points = document.getElementById('edit-points-select').value;
+        const qIndex = document.getElementById('edit-q-select').value;
+
+        if (confirm("هل أنت متأكد من رغبتك في حذف هذا السؤال نهائياً؟")) {
+            db[cat][points].splice(qIndex, 1); 
+            
+            if(db[cat][points].length === 0) {
+                delete db[cat][points];
+                if(Object.keys(db[cat]).length === 0) {
+                    delete db[cat];
+                    refreshAllLists();
+                } else {
+                    loadPointsForEdit();
+                }
+            } else {
+                loadQuestionsForEdit();
+            }
+            
+            localStorage.setItem('alokab_db_saved', JSON.stringify(db));
+            clearEditFields();
+            alert("تم حذف السؤال بنجاح! 🗑️");
+        }
+    }
+
+    function exportDatabase() {
+        const dbCode = "const db = " + JSON.stringify(db, null, 4) + ";";
+        const blob = new Blob([dbCode], { type: "text/plain;charset=utf-8" });
+        const a = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = "Okba_Database_Backup.txt"; 
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 0);
+    }
+
+    // دالة مسح كامل البيانات
+    function resetDatabase() {
+        if(confirm("تحذير ⚠️: هل أنت متأكد أنك تريد مسح جميع الأسئلة والمجموعات المحفوظة؟ هذا الإجراء لا يمكن التراجع عنه!")) {
+            localStorage.removeItem('alokab_db_saved');
+            db = {};
+            refreshAllLists();
+            alert("تم مسح جميع البيانات بنجاح. اللعبة الآن فارغة.");
+        }
+    }
+
+    /* =========================================
+        وظيفة الرفع المباشر إلى مستودع Al Oqab
+    ========================================= */
+    async function uploadToAlOqab() {
+        const token = document.getElementById('github-token').value.trim();
+        if (!token) return alert("❌ الرجاء إدخال توكن GitHub أولاً!");
+
+        const btn = document.getElementById('upload-github-btn');
+        btn.innerText = "⏳ جاري الرفع والاتصال بالموقع...";
+        btn.disabled = true;
+
+        // ⚠️ لا تنسَ تغيير 'YOUR_USERNAME' إلى اسم حسابك الفعلي في GitHub
+        const owner = 'YOUR_USERNAME'; 
+        const repo = 'Al Oqab'; // تم ربط المستودع هنا
+        const path = 'index.html'; // مسار الملف المراد تحديثه (يمكنك تغييره حسب الحاجة)
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+        const newContent = document.getElementById('generated-code-area').value;
+        if (!newContent) {
+            btn.innerText = "⬆️ رفع التعديلات مباشرة";
+            btn.disabled = false;
+            return alert("❌ لم تقم بأي تعديل لرفعه! قم بحفظ التعديلات أولاً لتوليد الكود.");
+        }
+
+        // الطريقة الممتازة لدعم اللغة العربية (UTF-8) قبل التشفير
+        const bytes = new TextEncoder().encode(newContent);
+        let binary = '';
+        // استخدام هذه الحلقة أفضل من String.fromCharCode(...bytes) لتجنب أخطاء الملفات الكبيرة
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        const base64Content = btoa(binary);
+
+        try {
+            let fileSha = null;
+            
+            // 1. محاولة جلب الملف الحالي للحصول على رمز الـ SHA الخاص به
+            const getResponse = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (getResponse.ok) {
+                const data = await getResponse.json();
+                fileSha = data.sha;
+            } else if (getResponse.status !== 404) {
+                throw new Error("فشل في الوصول للمستودع. تأكد من صحة التوكن أو صلاحيات الحساب.");
+            }
+
+            // 2. تجهيز الطلب لرفع الملف
+            const putBody = {
+                message: "تحديث النظام من لوحة تحكم Al Oqab ⚡",
+                content: base64Content
+            };
+            if (fileSha) putBody.sha = fileSha; // نضيف الـ SHA فقط إذا كان الملف موجوداً لتحديثه
+
+            // 3. إرسال الكود الجديد
+            const putResponse = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(putBody)
+            });
+
+            if (putResponse.ok) {
+                alert("✅ تم رفع الكود بنجاح إلى مستودع Al Oqab! سيتم تطبيق التحديثات خلال ثوانٍ.");
+            } else {
+                const errData = await putResponse.json();
+                throw new Error(errData.message || "حدث خطأ أثناء معالجة الطلب.");
+            }
+
+        } catch (error) {
+            alert("❌ حدث خطأ أثناء الرفع:\n" + error.message);
+        } finally {
+            // إعادة الزر إلى حالته الطبيعية
+            btn.innerText = "⬆️ رفع التعديلات مباشرة";
+            btn.disabled = false;
+        }
+    }
+
+    // تشغيل عند البداية لتجهيز القوائم
+    refreshAllLists();
+
+</script>
+</body>
+</html>
