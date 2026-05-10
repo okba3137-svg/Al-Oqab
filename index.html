@@ -26,7 +26,7 @@
 
 body { 
     background: var(--bg-color); 
-    height: 100vh; 
+    height: 100dvh; 
     width: 100vw;
     overflow: hidden; /* لمنع التمرير العشوائي الذي قد يفسد العرض الأفقي */
     display: flex;
@@ -44,7 +44,7 @@ body {
 .screen {
     position: absolute; 
     width: 100vw; 
-    height: 100vh; 
+    height: 100dvh; 
     display: none;
     flex-direction: column; 
     align-items: center; 
@@ -290,7 +290,7 @@ body {
         height: 100dvh;
         width: 100dvh;
         position: fixed;
-        overflow: hidden;
+        overflow: auto;
     }
 
     .screen {
