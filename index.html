@@ -245,7 +245,7 @@ body {
 
 .modal-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; max-width: 900px; min-height: 0; }
 
-.modal-q-img { max-width: 90%; max-height: 25vh; object-fit: contain; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; background: white; padding: 5px; }
+.modal-q-img { max-width: 90%; max-height: 25vh; object-fit: contain; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; background: white; padding: 5px; cursor: zoom-in; }
         .image-zoom-container {
     overflow: auto;
     max-width: 100%;
@@ -669,12 +669,11 @@ body {
 
         <div class="modal-body">
             <div id="hint-text"></div>
-            <img id="modal-q-img" class="modal-q-img" src="" alt="صورة السؤال">
+            <img id="modal-q-img" class="modal-q-img" src="" alt="صورة السؤال" onclick="openZoom(this)" style="cursor: zoom-in;">
             <div class="question-text" id="modal-q-text">سؤال؟</div>
             <div id="mcq-container"></div>
             
-           <!-- طبقة التغطية التي ستظهر فيها الصورة الكبيرة -->
-<div id="imageOverlay" class="overlay" onclick="closeZoom()">
+           <div id="imageOverlay" class="overlay" onclick="closeZoom()">
     <img id="expandedImg" src="">
 </div>
  
@@ -1364,3 +1363,4 @@ function closeZoom() {
 </script>
 </body>
 </html>
+
