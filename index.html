@@ -391,6 +391,35 @@ body {
 
     .wheel-container { width: 120px; height: 120px; margin: 5px 0; }
 }
+        /* طبقة التغطية - مخفية افتراضياً */
+.overlay {
+    display: none;
+    position: fixed;
+    z-index: 9999; /* فوق كل شيء */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9); /* خلفية سوداء شفافة */
+    justify-content: center;
+    align-items: center;
+    cursor: zoom-out;
+}
+
+/* الصورة داخل طبقة التغطية */
+.overlay img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    animation: zoomIn 0.3s ease; /* أنيميشن دخول بسيط */
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
 
 </style>
 
@@ -640,12 +669,15 @@ body {
 
         <div class="modal-body">
             <div id="hint-text"></div>
-            
-    <img src="your-image.jpg" class="image-zoom-container" onclick="openZoom(this)" style="cursor: zoom-in;">
-
+            <img id="modal-q-img" class="modal-q-img" src="" alt="صورة السؤال">
             <div class="question-text" id="modal-q-text">سؤال؟</div>
             <div id="mcq-container"></div>
             
+           <!-- طبقة التغطية التي ستظهر فيها الصورة الكبيرة -->
+<div id="imageOverlay" class="overlay" onclick="closeZoom()">
+    <img id="expandedImg" src="">
+</div>
+ 
             <div class="action-buttons">
                 <button class="pass-turn-btn" id="btn-pass-turn" onclick="manualPassTurn()">تحويل الدور 🔄</button>
                 <button class="show-answer-btn" id="btn-show-answer" onclick="revealAnswer()">عرض الإجابة ✔</button>
@@ -5592,7 +5624,24 @@ body {
             }
         }, 1000);
     }
+function openZoom(imgElement) {
+    const overlay = document.getElementById("imageOverlay");
+    const expandedImg = document.getElementById("expandedImg");
+    
+    // نأخذ مسار الصورة التي تم الضغط عليها
+    expandedImg.src = imgElement.src;
+    
+    // إظهار طبقة التغطية
+    overlay.style.display = "flex";
+}
 
+function closeZoom() {
+    // إخفاء طبقة التغطية عند الضغط في أي مكان
+    document.getElementById("imageOverlay").style.display = "none";
+}
+
+
+    
     function revealAnswer() {
         clearInterval(timerInterval);
         document.getElementById('btn-show-answer').style.display = 'none';
