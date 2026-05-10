@@ -5706,45 +5706,6 @@ body {
         ['new-q','new-a','new-hint','new-opts','new-img'].forEach(id => document.getElementById(id).value = '');
     }
 
-    const img = document.getElementById("modal-q-img");
-
-let scale = 1;
-let startDistance = 0;
-
-function getDistance(touches) {
-    return Math.hypot(
-        touches[0].clientX - touches[1].clientX,
-        touches[0].clientY - touches[1].clientY
-    );
-}
-
-img.addEventListener("touchstart", (e) => {
-    if (e.touches.length === 2) {
-        startDistance = getDistance(e.touches);
-    }
-}, { passive: false });
-
-img.addEventListener("touchmove", (e) => {
-    if (e.touches.length === 2) {
-        e.preventDefault();
-
-        let currentDistance = getDistance(e.touches);
-
-        if (startDistance) {
-            scale *= currentDistance / startDistance;
-
-            scale = Math.min(Math.max(scale, 1), 5);
-
-            img.style.transform = `scale(${scale})`;
-        }
-
-        startDistance = currentDistance;
-    }
-}, { passive: false });
-
-img.addEventListener("touchend", () => {
-    startDistance = 0;
-}
 
     function renameCategory() {
         const oldCat = document.getElementById('edit-cat-select').value;
